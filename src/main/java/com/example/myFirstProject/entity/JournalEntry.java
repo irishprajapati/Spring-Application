@@ -4,6 +4,7 @@ public class JournalEntry {
     private long id;
     private String title;
     private String content;
+    private long myId;
     public JournalEntry(long id, String title, String content){
         this.id = id;
         this.title = title;

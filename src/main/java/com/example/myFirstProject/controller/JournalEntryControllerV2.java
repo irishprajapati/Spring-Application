@@ -6,33 +6,30 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-@RestController
-@RequestMapping("/journal")// -> getall entry()
-public class JournalEntryController {
+public class JournalEntryControllerV2 {
     @GetMapping
     public List<JournalEntry> getAll(){
-        return new ArrayList<>(journalEntryMap.values());
+        return null;
+
     }
     @PostMapping
     public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry myEntry){
-        journalEntryMap.put(myEntry.getId(), myEntry);
-        return ResponseEntity.status(HttpStatus.CREATED).body(myEntry);
+        return null;
     }
     @GetMapping("/id/{myId}")
     public JournalEntry getJournalEntryById(@PathVariable long myId) {
-        return journalEntryMap.get(myId);
+        return null;
+
     }
     @DeleteMapping("/id/{myId}")
     public JournalEntry deleteEntryById(@PathVariable long myId){
-        return journalEntryMap.remove(myId);
+    return null;
     }
 
     @PutMapping("/id/{Id}")
     public JournalEntry updateJournalByEntry(@PathVariable long Id, @RequestBody JournalEntry myEntry){
-        return journalEntryMap.put(Id, myEntry);
+    return null;
     }
 }
