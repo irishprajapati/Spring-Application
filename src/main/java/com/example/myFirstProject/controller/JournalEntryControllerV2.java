@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/journal")
 public class JournalEntryControllerV2 {
@@ -22,14 +24,21 @@ public class JournalEntryControllerV2 {
     }
     @PostMapping
     public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry myEntry){
-        myEntry.setDate(LocalDateTime.now());
-        System.out.println("Controller HIT");
-        journalEntryService.saveEntry(myEntry);
-        return ResponseEntity.status(HttpStatus.CREATED).body(myEntry);
+        try{
+            myEntry.setDate(LocalDateTime.now());
+            journalEntryService.saveEntry(myEntry);
+            return new ResponseEntity<>(myEntry, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
     @GetMapping("/id/{myId}")
-    public JournalEntry getJournalEntryById(@PathVariable ObjectId myId) {
-        return journalEntryService.findById(myId).orElse(null);
+    public  ResponseEntity<JournalEntry> getJournalEntryById(@PathVariable ObjectId myId) {
+        Optional<JournalEntry> journalEntry = journalEntryService.findById(myId);
+        if(journalEntry.isPresent()){
+            return new ResponseEntity<>(journalEntry.get(), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
     }
     @DeleteMapping("/id/{myId}")
