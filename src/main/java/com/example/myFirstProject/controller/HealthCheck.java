@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class HealthCheck {
     @GetMapping("/health")
     public String ValidateHealth(){
+        // this is to check whether the API endpoints are working fine or not in browser
         return "Okay";
     }
     @GetMapping("/ping")
