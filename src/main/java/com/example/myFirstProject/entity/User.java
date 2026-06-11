@@ -3,7 +3,6 @@ package com.example.myFirstProject.entity;
 import lombok.Data;
 import lombok.NonNull;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -11,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 import java.util.List;
-
+ //user entity to represent the user data model
 @Document(collection = "users")
 @Data
 public class User{
@@ -24,4 +23,5 @@ public class User{
     private String password;
     @DBRef
     private List<JournalEntry> journalEntries = new ArrayList<>();
+    private List<String> roles;
 }
