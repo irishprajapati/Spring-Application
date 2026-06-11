@@ -56,7 +56,7 @@ public class JournalEntryControllerV2 {
     public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry myEntry, @PathVariable String userName){
         /* try-catch method
         as the path variable is sent to check who is user
-        ant he requuest body check data and converts to json format
+        ant he reqeust body check data and converts to json format
         */
         try{
             journalEntryService.saveEntry(myEntry, userName);
