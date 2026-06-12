@@ -8,9 +8,12 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 //combination of controller and response body
 @RestController
@@ -36,14 +39,11 @@ public class JournalEntryControllerV2 {
 //        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 //    }
     // -> code for all journal entries
-    @GetMapping("/allentries")
-    public ResponseEntity<List<JournalEntry>> getAllJournalEntries(){
-        List<JournalEntry> all = journalEntryService.getAll();
-        return new ResponseEntity<>(all, HttpStatus.OK);
-     }
      // -> code to get individual user journal entries by username
-    @GetMapping("/{userName}")
-    public ResponseEntity<?> getJournalEntriesByUserName(@PathVariable String userName){
+    @GetMapping
+    public ResponseEntity<?> getJournalEntriesByUserName(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
         User userJournals = userService.findByUserName(userName);
         List<JournalEntry> journalData = userJournals.getJournalEntries();
         if(journalData != null && !journalData.isEmpty()){
@@ -51,14 +51,16 @@ public class JournalEntryControllerV2 {
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-    @PostMapping("/{userName}")
+    @PostMapping
     // create the journal entry as the post method
-    public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry myEntry, @PathVariable String userName){
+    public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry myEntry){
         /* try-catch method
         as the path variable is sent to check who is user
         ant he reqeust body check data and converts to json format
         */
         try{
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userName = authentication.getName();
             journalEntryService.saveEntry(myEntry, userName);
             return new ResponseEntity<>(myEntry, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -67,14 +69,22 @@ public class JournalEntryControllerV2 {
     }
 
     @GetMapping("/id/{myId}")
-    // get method to fetch from the id
     public  ResponseEntity<JournalEntry> getJournalEntryById(@PathVariable ObjectId myId) {
-        Optional<JournalEntry> journalEntry = journalEntryService.findById(myId);
-        if(journalEntry.isPresent()){
-            return new ResponseEntity<>(journalEntry.get(), HttpStatus.OK);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+        User byUserName = userService.findByUserName(userName);
+        List<JournalEntry> collect =
+                byUserName.getJournalEntries()
+                        .stream()
+                        .filter(x -> x.getId().equals(myId))
+                        .collect(Collectors.toList());
+        if (!collect.isEmpty()) {
+            Optional<JournalEntry> journalEntry = journalEntryService.findById(myId);
+            if(journalEntry.isPresent()){
+                return new ResponseEntity<>(journalEntry.get(), HttpStatus.OK);
+            }
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-
     }
     @DeleteMapping("/id/{userName}/{myId}")
     public ResponseEntity<?> deleteJournalEntryById(@PathVariable ObjectId myId, @PathVariable String userName){
