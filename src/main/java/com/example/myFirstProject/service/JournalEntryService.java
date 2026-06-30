@@ -4,11 +4,11 @@ import com.example.myFirstProject.entity.JournalEntry;
 import com.example.myFirstProject.entity.User;
 import com.example.myFirstProject.repository.JournalEntryRepository;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,25 +16,43 @@ import java.util.Optional;
 @Service
 public class JournalEntryService {
 
-JournalEntry journalEntry = new JournalEntry();
-@Autowired
-    private JournalEntryRepository journalEntryRepository;
-//Autowiring means making a class from the bean which is already present in spring
-    @Autowired
-    private UserService userService;
+//JournalEntry journalEntry = new JournalEntry();
+private final JournalEntryRepository journalEntryRepository;
+private final UserService userService;
 
+    public JournalEntryService(JournalEntryRepository journalEntryRepository, UserService userService) {
+        this.journalEntryRepository = journalEntryRepository;
+        this.userService = userService;
+    }
     @Transactional
-    public void saveEntry(JournalEntry journalEntry, String userName){
+    public JournalEntry saveEntry(JournalEntry journalEntry, String userName) {
+
+        if (journalEntry == null) {
+            throw new IllegalArgumentException("Journal entry cannot be null");
+        }
+
+        if (userName == null || userName.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be empty or null");
+        }
+        System.out.println("Service hit here..");
+        System.out.println("JournalEntry: " + journalEntry);
+        System.out.println("User before fetch: " + userName);
         User user = userService.findByUserName(userName);
-        //set the localtime of the journal now so that API doesnt have to sent the date
+        System.out.println("user fetched: " + user);
+        System.out.println("User entries: " + user.getJournalEntries());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        // Ensure list is initialized (best practice: do this in entity)
+        if (user.getJournalEntries() == null) {
+            user.setJournalEntries(new ArrayList<>());
+        }
         journalEntry.setDate(LocalDateTime.now());
-        // this line was just for the debug
-        System.out.println("SERVICE HIT");
-        // holding the saved journal entry so that user can be also added in that journal entry
-        JournalEntry saved = journalEntryRepository.save(journalEntry);
-        user.getJournalEntries().add(saved);
+        JournalEntry savedEntry = journalEntryRepository.save(journalEntry);
+        user.getJournalEntries().add(savedEntry);
         userService.saveNewUser(user);
-        System.out.println("SAVED: " + saved);
+        return savedEntry;
     }
 
     public void saveEntry(JournalEntry journalEntry){
@@ -48,17 +66,22 @@ JournalEntry journalEntry = new JournalEntry();
         return journalEntryRepository.findById(id);
     }
 
-    public void deleteById(ObjectId id, String userName) {
-        try {
-            User user = userService.findByUserName(userName);
-            boolean removed = user.getJournalEntries().removeIf(x -> x.getId().equals(id));
-            if (removed) {
-                userService.saveUser(user);
-                journalEntryRepository.deleteById(id);
-            }
-        } catch (Exception e) {
-            System.out.println(e);
-            throw new RuntimeException("An exception occured", e);
+    public void deleteById(ObjectId id, String userName){
+        if(id == null){
+            throw new IllegalArgumentException("Id cannot be null");
         }
+        if(userName == null && userName.isBlank()){
+            throw new IllegalArgumentException("Username cannot be empty or null");
+        }
+        User user = userService.findByUserName(userName);
+        if(user == null){
+            throw new RuntimeException("User cannot be null");
+        }
+        boolean removed = user.getJournalEntries().removeIf(x->x.getId().equals(id));
+        if(!removed){
+            throw new RuntimeException("Entry not found in user's list");
+        }
+        userService.saveUser(user);
+        journalEntryRepository.deleteById(id);
     }
 }
