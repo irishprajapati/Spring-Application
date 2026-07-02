@@ -1,0 +1,9 @@
+spring:
+  profiles:
+    active: dev
+#  logging:
+#    level:
+#      com:
+#        example:
+#          myFirstProject:
+#            root: DEBUG
