@@ -3,7 +3,9 @@ package com.example.myFirstProject.service;
 import com.example.myFirstProject.entity.JournalEntry;
 import com.example.myFirstProject.entity.User;
 import com.example.myFirstProject.repository.JournalEntryRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +16,9 @@ import java.util.Optional;
 
 // -> service code are the core business logic written in spring which is called by controller
 @Service
+@Slf4j
 public class JournalEntryService {
 
-//JournalEntry journalEntry = new JournalEntry();
 private final JournalEntryRepository journalEntryRepository;
 private final UserService userService;
 
@@ -34,14 +36,10 @@ private final UserService userService;
         if (userName == null || userName.isBlank()) {
             throw new IllegalArgumentException("Username cannot be empty or null");
         }
-        System.out.println("Service hit here..");
-        System.out.println("JournalEntry: " + journalEntry);
-        System.out.println("User before fetch: " + userName);
         User user = userService.findByUserName(userName);
-        System.out.println("user fetched: " + user);
-        System.out.println("User entries: " + user.getJournalEntries());
         if (user == null) {
-            throw new RuntimeException("User not found");
+            log.error("User not found with id: {}", userName);
+            throw new RuntimeException("User not found with id: " + userName);
         }
 
         // Ensure list is initialized (best practice: do this in entity)
@@ -70,11 +68,12 @@ private final UserService userService;
         if(id == null){
             throw new IllegalArgumentException("Id cannot be null");
         }
-        if(userName == null && userName.isBlank()){
+        if(userName == null || userName.isBlank()){
             throw new IllegalArgumentException("Username cannot be empty or null");
         }
         User user = userService.findByUserName(userName);
         if(user == null){
+            log.error("User cannot be null");
             throw new RuntimeException("User cannot be null");
         }
         boolean removed = user.getJournalEntries().removeIf(x->x.getId().equals(id));

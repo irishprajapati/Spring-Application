@@ -14,17 +14,24 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final PasswordEncoder passwordEncoder;
-    public UserService(PasswordEncoder passwordEncoder){
+    public UserService(PasswordEncoder passwordEncoder, UserRepository userRepository){
         this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
     }
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
     public void saveUser(User user){
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRoles(Arrays.asList("USER"));
-        userRepository.save(user);
+        user.setRoles(Arrays.asList("USER")); //can be written as enum later on
+        userRepository.save(user); //then saves into the repository -> repository calls the database
     }
     public void saveNewUser(User user){
+        userRepository.save(user);
+    }
+    //Admin save
+    public void saveAdmin(User user){
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRoles(Arrays.asList("USER", "ADMIN"));
         userRepository.save(user);
     }
     public List<User> getAllUser(){
