@@ -3,29 +3,35 @@ package com.example.myFirstProject;
 import com.example.myFirstProject.entity.JournalEntry;
 import com.example.myFirstProject.repository.JournalEntryRepository;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
     public class DebugConfig {
-    @Autowired
-    private JournalEntryRepository journalEntryRepository;
+    private final JournalEntryRepository journalEntryRepository;
 
-        @Autowired
-        private Environment env;
 
-        @PostConstruct
+        private final Environment env;
+
+    public DebugConfig(JournalEntryRepository journalEntryRepository, Environment env) {
+        this.journalEntryRepository = journalEntryRepository;
+        this.env = env;
+    }
+
+    @PostConstruct
         public void printMongoConfig() {
-            System.out.println("DB: " + env.getProperty("spring.data.mongodb.database"));
-            System.out.println("URI: " + env.getProperty("spring.data.mongodb.uri"));
-        }
+        log.info("DB {}", env.getProperty("spring.data.mongodb.database"));
+        log.info("URI {}", env.getProperty("spring.data.mongodb.uri"));
+    }
     @PostConstruct
     public void testInsert(){
         JournalEntry entry = new JournalEntry();
         entry.setTitle("Atlas test");
         entry.setContent("This should go to Atlas");
         journalEntryRepository.save(entry);
-        System.out.println("Inserted Test Document");
+        log.info("Inserted Test Document {}", entry);
     }
     }
