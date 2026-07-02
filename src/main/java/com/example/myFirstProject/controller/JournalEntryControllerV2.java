@@ -4,8 +4,8 @@ import com.example.myFirstProject.entity.JournalEntry;
 import com.example.myFirstProject.entity.User;
 import com.example.myFirstProject.service.JournalEntryService;
 import com.example.myFirstProject.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,18 +18,21 @@ import java.util.stream.Collectors;
 //combination of controller and response body
 @RestController
 @RequestMapping("/journal")
+@Slf4j
 public class JournalEntryControllerV2 {
-    // helps to get the bean and make the class faster
-    @Autowired
-    private JournalEntryService journalEntryService;
-    @Autowired
-    private UserService userService;
+     //helps to get the bean and make the class faster
+    private final JournalEntryService journalEntryService;
+    private final UserService userService;
 
-    // -> code for all journal entries
-    // -> code to get individual user journal entries by username
+    public JournalEntryControllerV2(JournalEntryService journalEntryService, UserService userService) {
+        this.journalEntryService = journalEntryService;
+        this.userService = userService;
+    }
+
     @GetMapping
     public ResponseEntity<?> getJournalEntriesByUserName() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assert authentication != null;
         String userName = authentication.getName();
         User userJournals = userService.findByUserName(userName);
         List<JournalEntry> journalData = userJournals.getJournalEntries();
@@ -44,11 +47,18 @@ public class JournalEntryControllerV2 {
     public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry myEntry) {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if(authentication == null || !authentication.isAuthenticated()){
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
             String userName = authentication.getName();
             journalEntryService.saveEntry(myEntry, userName);
+            log.info("Controller Hit");
+            log.info("User {}", userName);
             return new ResponseEntity<>(myEntry, HttpStatus.CREATED);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

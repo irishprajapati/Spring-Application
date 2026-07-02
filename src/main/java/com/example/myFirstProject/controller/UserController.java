@@ -4,28 +4,23 @@ import com.example.myFirstProject.entity.User;
 import com.example.myFirstProject.repository.UserRepository;
 import com.example.myFirstProject.service.UserService;
 import org.bson.types.ObjectId;
-import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private UserRepository userRepository;
-//    @GetMapping
-//    public List<User> getAllUser(){
-//        return userService.getAllUser();
-//    }
+    private final UserService userService;
+    private final UserRepository userRepository;
+
+    public UserController(UserService userService, UserRepository userRepository) {
+        this.userService = userService;
+        this.userRepository = userRepository;
+    }
 
     @GetMapping("/user/{myId}")
     public ResponseEntity<?> getUserById(@PathVariable ObjectId id){
