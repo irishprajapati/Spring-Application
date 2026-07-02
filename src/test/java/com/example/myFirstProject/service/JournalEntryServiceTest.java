@@ -3,13 +3,13 @@ package com.example.myFirstProject.service;
 import com.example.myFirstProject.entity.JournalEntry;
 import com.example.myFirstProject.entity.User;
 import com.example.myFirstProject.repository.JournalEntryRepository;
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,6 +24,7 @@ public class JournalEntryServiceTest {
     private UserService userService;
     @InjectMocks
     private JournalEntryService journalEntryService;
+
     @Nested
     class SaveEntryTests {
         @Test
@@ -77,6 +78,97 @@ public class JournalEntryServiceTest {
             assertTrue(user.getJournalEntries().contains(entry));
         }
     }
+
     @Nested
-    class DeleteEntryTests
+    class DeleteEntryTests {
+
+        @Test
+        void shouldDeleteEntrySuccessfully() {
+            String username = "testUser";
+            ObjectId id = new ObjectId();
+
+            JournalEntry entry = new JournalEntry();
+            entry.setId(id);
+
+            User user = new User(username, "pass");
+            user.setJournalEntries(new ArrayList<>());
+            user.getJournalEntries().add(entry);
+
+            when(userService.findByUserName(username)).thenReturn(user);
+
+            journalEntryService.deleteById(id, username);
+
+            verify(userService).saveUser(user);
+            verify(journalEntryRepository).deleteById(id);
+            assertFalse(user.getJournalEntries().contains(entry));
+        }
+
+        @Test
+        void shouldThrowWhenIdIsNull() {
+            String username = "testUser";
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                journalEntryService.deleteById(null, username);
+            });
+
+            verifyNoInteractions(userService);
+            verifyNoInteractions(journalEntryRepository);
+        }
+
+        @Test
+        void shouldThrowWhenUsernameIsNull() {
+            ObjectId id = new ObjectId();
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                journalEntryService.deleteById(id, null);
+            });
+
+            verifyNoInteractions(userService);
+            verifyNoInteractions(journalEntryRepository);
+        }
+
+        @Test
+        void shouldThrowWhenUsernameIsBlank() {
+            ObjectId id = new ObjectId();
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                journalEntryService.deleteById(id, "");
+            });
+
+            verifyNoInteractions(userService);
+            verifyNoInteractions(journalEntryRepository);
+        }
+
+        @Test
+        void shouldThrowWhenUserNotFound() {
+            String username = "unknown";
+            ObjectId id = new ObjectId();
+
+            when(userService.findByUserName(username)).thenReturn(null);
+
+            assertThrows(RuntimeException.class, () -> {
+                journalEntryService.deleteById(id, username);
+            });
+
+            verify(journalEntryRepository, never()).deleteById(any());
+        }
+
+        @Test
+        void shouldThrowWhenEntryNotInUserList() {
+            String username = "testUser";
+            ObjectId id = new ObjectId();
+
+            User user = new User(username, "pass");
+            user.setJournalEntries(new ArrayList<>()); // EMPTY list
+
+            when(userService.findByUserName(username)).thenReturn(user);
+
+            assertThrows(RuntimeException.class, () -> {
+                journalEntryService.deleteById(id, username);
+            });
+
+            verify(journalEntryRepository, never()).deleteById(any());
+            verify(userService, never()).saveUser(any());
+        }
+    }
 }
